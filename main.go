@@ -14,18 +14,18 @@ func mod(x int, y int) int {
 	return x
 }
 
-type Node[T comparable] struct {
+type Node[T any] struct {
 	next, prev *Node[T]
 	data       T
 }
 
-type LinkedList[T comparable] struct {
+type LinkedList[T any] struct {
 	header  *Node[T]
 	trailer *Node[T]
 	size    int
 }
 
-func NewLinkedList[T comparable]() *LinkedList[T] {
+func NewLinkedList[T any]() *LinkedList[T] {
 	var zero T
 
 	header := &Node[T]{data: zero}
@@ -58,6 +58,28 @@ func (l *LinkedList[T]) retrieveNodeAt(index int) (*Node[T], error) {
 	}
 
 	return current, nil
+}
+
+func areEqual(a, b any) (bool, error) {
+	if a == nil && b == nil {
+		return true, nil
+	}
+	if a == nil || b == nil {
+		return false, nil
+	}
+
+	va := reflect.ValueOf(a)
+	vb := reflect.ValueOf(b)
+
+	if va.Type() != vb.Type() {
+		return false, nil
+	}
+
+	if !va.Type().Comparable() {
+		return false, fmt.Errorf("type %v is not comparable", va.Type())
+	}
+
+	return va.Interface() == vb.Interface(), nil
 }
 
 func (l *LinkedList[T]) Get(index int) (T, error) {
@@ -198,23 +220,31 @@ func (l *LinkedList[T]) Backward() iter.Seq[T] {
 	}
 }
 
-func (l *LinkedList[T]) Contains(value T) bool {
-	return l.IndexOf(value) != -1
-}
-
-func (l *LinkedList[T]) IndexOf(value T) int {
-	if l.size == 0 {
-		return -1
-	}
-
+func (l *LinkedList[any]) IndexOf(value any) (int, error) {
 	current := l.header.next
 	for i := 0; i < l.size; i++ {
-		if current.data == value {
-			return i
+		equal, err := areEqual(current.data, value)
+		if err != nil {
+			return -1, err
+		}
+		if equal {
+			return i, nil
 		}
 		current = current.next
 	}
-	return -1
+	return -1, nil
+}
+
+func (l *LinkedList[any]) Contains(value any) (bool, error) {
+	index, err := l.IndexOf(value)
+	if err != nil {
+		return false, err
+	}
+	return index != -1, nil
+}
+
+func (l *LinkedList[any]) RemoveValue(value any) (bool, error) {
+	return false, nil
 }
 
 func (l *LinkedList[T]) Clear() {
