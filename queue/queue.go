@@ -1,6 +1,6 @@
 package queue
 
-import "github.com/AndyWren/go-linked-list/linkedlist"
+import "github.com/AndyWren/go_linked_list/linkedlist"
 
 type Queue[T any] struct {
 	list *linkedlist.LinkedList[T]
